@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>The Backrooms</title>
+</head>
+<body>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://studio-164629114-88620-default-rtdb.firebaseio.com",
+    };
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+      const htmlPath = "/pageHtml";
+
+      database.ref(htmlPath).get().then((snapshot) => {
+        if (snapshot.exists()) {
+          const htmlContent = snapshot.val();
+          const parser = new DOMParser();
+          const newDoc = parser.parseFromString(htmlContent, "text/html");
+
+          // Clear the body of the current page before adding new content
+          document.body.innerHTML = '';
+
+          // Transfer styles
+          const style = newDoc.querySelector('style');
+          if (style) {
+            document.head.appendChild(style.cloneNode(true));
+          }
+
+          // Get iframe, add fullscreen attributes, and append
+          const iframe = newDoc.querySelector('iframe');
+          if (iframe) {
+            iframe.setAttribute('allow', 'fullscreen');
+            iframe.setAttribute('allowfullscreen', '');
+            document.body.appendChild(iframe);
+          }
+        } else {
+          console.error("No data available at path: " + htmlPath);
+          document.body.innerHTML = "<h1>Error</h1><p>Could not load page content from the database. Please make sure the content exists at the '/pageHtml' path in your Firebase Realtime Database.</p>";
+        }
+      }).catch((error) => {
+        console.error("Error fetching data:", error);
+        document.body.innerHTML = "<h1>Error</h1><p>There was an error loading the page content from the database.</p><pre>" + error.message + "</pre>";
+      });
+    } catch (e) {
+      console.error("Firebase initialization error:", e);
+      document.body.innerHTML = "<h1>Error</h1><p>Could not initialize Firebase. Please check your configuration.</p>";
+    }
+  </script>
+
+</body>
+</html>
